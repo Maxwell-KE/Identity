@@ -12,6 +12,7 @@ using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Http.Security;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.OptionsModel;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Identity
 {
@@ -24,6 +25,7 @@ namespace Microsoft.AspNet.Identity
         public SignInManager(UserManager<TUser> userManager, 
             IContextAccessor<HttpContext> contextAccessor, 
             IClaimsIdentityFactory<TUser> claimsFactory, 
+	    ILoggerFactory loggerFactory
             IOptions<IdentityOptions> optionsAccessor = null)
         {
             if (userManager == null)
@@ -38,16 +40,23 @@ namespace Microsoft.AspNet.Identity
             {
                 throw new ArgumentNullException(nameof(claimsFactory));
             }
+	    if (loggerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
             UserManager = userManager;
             Context = contextAccessor.Value;
             ClaimsFactory = claimsFactory;
             Options = optionsAccessor?.Options ?? new IdentityOptions();
+	    Logger = loggerFactory.Create(nameof(SignInManager<TUser>));
         }
 
         public UserManager<TUser> UserManager { get; private set; }
         public HttpContext Context { get; private set; }
         public IClaimsIdentityFactory<TUser> ClaimsFactory { get; private set; }
         public IdentityOptions Options { get; private set; }
+        public ILogger Logger { get; set; }
 
         // Should this be a func?
         public virtual async Task<ClaimsIdentity> CreateUserIdentityAsync(TUser user,
@@ -61,13 +70,13 @@ namespace Microsoft.AspNet.Identity
         {
             if (Options.SignIn.RequireConfirmedEmail && !(await UserManager.IsEmailConfirmedAsync(user, cancellationToken)))
             {
-                return false;
+                return await LogResultAsync(false, user);
             }
             if (Options.SignIn.RequireConfirmedPhoneNumber && !(await UserManager.IsPhoneNumberConfirmedAsync(user, cancellationToken)))
             {
-                return false;
+                return await LogResultAsync(false, user);
             }
-            return true;
+            return await LogResultAsync(true, user);
         }
 
         public virtual async Task SignInAsync(TUser user, bool isPersistent, string authenticationMethod = null,
@@ -149,16 +158,16 @@ namespace Microsoft.AspNet.Identity
             var error = await PreSignInCheck(user, cancellationToken);
             if (error != null)
             {
-                return error;
+                 return await LogResultAsync(error.Value, user);
             }
             if (await IsLockedOut(user, cancellationToken))
             {
-                return SignInResult.LockedOut;
+		return await LogResultAsync(SignInResult.LockedOut, user);
             }
             if (await UserManager.CheckPasswordAsync(user, password, cancellationToken))
             {
                 await ResetLockout(user, cancellationToken);
-                return await SignInOrTwoFactorAsync(user, isPersistent, cancellationToken);
+                return await LogResultAsync(await SignInOrTwoFactorAsync(user, isPersistent, cancellationToken), user);
             }
             if (UserManager.SupportsUserLockout && shouldLockout)
             {
@@ -166,10 +175,11 @@ namespace Microsoft.AspNet.Identity
                 await UserManager.AccessFailedAsync(user, cancellationToken);
                 if (await UserManager.IsLockedOutAsync(user, cancellationToken))
                 {
-                    return SignInResult.LockedOut;
+
+                    return await LogResultAsync(SignInStatus.LockedOut, user);
                 }
             }
-            return SignInResult.Failed;
+            return await LogResultAsync(SignInStatus.Failed, user);
         }
 
         public virtual async Task<SignInResult> PasswordSignInAsync(string userName, string password,
@@ -257,7 +267,7 @@ namespace Microsoft.AspNet.Identity
             var error = await PreSignInCheck(user, cancellationToken);
             if (error != null)
             {
-                return error;
+                return await LogResultAsync(error.Value, user);
             }
             if (await UserManager.VerifyTwoFactorTokenAsync(user, provider, code, cancellationToken))
             {
@@ -275,11 +285,11 @@ namespace Microsoft.AspNet.Identity
                 }
                 await UserManager.ResetAccessFailedCountAsync(user, cancellationToken);
                 await SignInAsync(user, isPersistent);
-                return SignInResult.Success;
+                return await LogResultAsync(SignInStatus.Success, user);
             }
             // If the token is incorrect, record the failure which also may cause the user to be locked out
             await UserManager.AccessFailedAsync(user, cancellationToken);
-            return SignInResult.Failed;
+            return await LogResultAsync(SignInStatus.Failed, user);
         }
 
         /// <summary>
@@ -310,9 +320,9 @@ namespace Microsoft.AspNet.Identity
             var error = await PreSignInCheck(user, cancellationToken);
             if (error != null)
             {
-                return error;
+                return await LogResultAsync(error.Value, user);
             }
-            return await SignInOrTwoFactorAsync(user, isPersistent, cancellationToken, loginProvider);
+            return await LogResultAsync(await SignInOrTwoFactorAsync(user, isPersistent, cancellationToken, loginProvider), user);
         }
 
         private const string LoginProviderKey = "LoginProvider";
@@ -323,7 +333,7 @@ namespace Microsoft.AspNet.Identity
             return Context.GetAuthenticationTypes().Where(d => !string.IsNullOrEmpty(d.Caption));
         }
 
-        public virtual async Task<ExternalLoginInfo> GetExternalLoginInfoAsync(string expectedXsrf = null, 
+        public virtual async Task<ExternalLoginInfo> GetExternalLoginInfoAsync(string expectedXsrf = null,
             CancellationToken cancellationToken = default(CancellationToken))
         {
             var auth = await Context.AuthenticateAsync(IdentityOptions.ExternalCookieAuthenticationType);
@@ -368,7 +378,7 @@ namespace Microsoft.AspNet.Identity
         private async Task<SignInResult> SignInOrTwoFactorAsync(TUser user, bool isPersistent,
             CancellationToken cancellationToken, string loginProvider = null)
         {
-            if (UserManager.SupportsUserTwoFactor && 
+            if (UserManager.SupportsUserTwoFactor &&
                 await UserManager.GetTwoFactorEnabledAsync(user, cancellationToken) &&
                 (await UserManager.GetValidTwoFactorProvidersAsync(user, cancellationToken)).Count > 0)
             {
@@ -401,6 +411,36 @@ namespace Microsoft.AspNet.Identity
                 };
             }
             return null;
+        }
+
+        /// <summary>
+        ///     Log boolean result for user and return result
+        /// </summary>
+        /// <param name="result"></param>
+        /// <param name="user"></param>
+        /// <param name="methodName"></param>
+        /// <returns></returns>
+        protected async virtual Task<bool> LogResultAsync(bool result, TUser user, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
+        {
+            Logger.WriteInformation(Resources.FormatLoggingSigninStatus(methodName, 
+                await UserManager.GetUserIdAsync(user), result));
+
+            return result;
+        }
+
+        /// <summary>
+        ///     Log SignInStatus for user and return SignInStatus
+        /// </summary>
+        /// <param name="status"></param>
+        /// <param name="user"></param>
+        /// <param name="methodName"></param>
+        /// <returns></returns>
+        protected async virtual Task<SignInStatus> LogResultAsync(SignInStatus status, TUser user, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
+        {
+            Logger.WriteInformation(Resources.FormatLoggingSigninStatus(methodName, 
+                await UserManager.GetUserIdAsync(user), status.ToString()));
+
+            return status;
         }
 
         internal static ClaimsIdentity StoreTwoFactorInfo(string userId, string loginProvider)

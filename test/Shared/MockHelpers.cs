@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Framework.Logging;
 using Microsoft.Framework.OptionsModel;
 using Moq;
 
@@ -14,7 +15,7 @@ namespace Microsoft.AspNet.Identity.Test
         public static Mock<UserManager<TUser>> MockUserManager<TUser>() where TUser : class
         {
             var store = new Mock<IUserStore<TUser>>();
-            var mgr = new Mock<UserManager<TUser>>(store.Object, null, null, null, null, null, null, null, null);
+            var mgr = new Mock<UserManager<TUser>>(store.Object, new LoggerFactory(), null, null, null, null, null, null, null, null);
             mgr.Object.UserValidators.Add(new UserValidator<TUser>());
             mgr.Object.PasswordValidators.Add(new PasswordValidator<TUser>());
             return mgr;
@@ -36,7 +37,7 @@ namespace Microsoft.AspNet.Identity.Test
         public static UserManager<TUser> TestUserManager<TUser>(IUserStore<TUser> store) where TUser : class
         {
             var validator = new Mock<IUserValidator<TUser>>();
-            var userManager = new UserManager<TUser>(store);
+            var userManager = new UserManager<TUser>(store, new LoggerFactory());
             userManager.UserValidators.Add(validator.Object);
             userManager.PasswordValidators.Add(new PasswordValidator<TUser>());
             validator.Setup(v => v.ValidateAsync(userManager, It.IsAny<TUser>(), CancellationToken.None))

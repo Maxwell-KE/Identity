@@ -746,6 +746,102 @@ namespace Microsoft.AspNet.Identity
             return string.Format(CultureInfo.CurrentCulture, GetString("UserNotInRole"), p0);
         }
 
+        /// <summary>
+        /// {0} : Failed : {1}
+        /// </summary>
+        internal static string LogIdentityResultFailure
+        {
+            get { return GetString("LogIdentityResultFailure"); }
+        }
+
+        /// <summary>
+        /// {0} : Failed : {1}
+        /// </summary>
+        internal static string FormatLogIdentityResultFailure(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("LogIdentityResultFailure"), p0, p1);
+        }
+
+        /// <summary>
+        /// {0} : Success
+        /// </summary>
+        internal static string LogIdentityResultSuccess
+        {
+            get { return GetString("LogIdentityResultSuccess"); }
+        }
+
+        /// <summary>
+        /// {0} : Success
+        /// </summary>
+        internal static string FormatLogIdentityResultSuccess(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("LogIdentityResultSuccess"), p0);
+        }
+
+        /// <summary>
+        /// Completed method {0} for user {1} with status {2}
+        /// </summary>
+        internal static string LoggingSigninStatus
+        {
+            get { return GetString("LoggingSigninStatus"); }
+        }
+
+        /// <summary>
+        /// Completed method {0} for user {1} with status {2}
+        /// </summary>
+        internal static string FormatLoggingSigninStatus(object p0, object p1, object p2)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("LoggingSigninStatus"), p0, p1, p2);
+        }
+
+        /// <summary>
+        /// Method {0} on user {1}
+        /// </summary>
+        internal static string LoggingIdentityResultMessage
+        {
+            get { return GetString("LoggingIdentityResultMessage"); }
+        }
+
+        /// <summary>
+        /// Method {0} on user {1}
+        /// </summary>
+        internal static string FormatLoggingIdentityResultMessage(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("LoggingIdentityResultMessage"), p0, p1);
+        }
+
+        /// <summary>
+        /// Method {0} on role {1}
+        /// </summary>
+        internal static string LoggingIdentityResultMessageForRole
+        {
+            get { return GetString("LoggingIdentityResultMessageForRole"); }
+        }
+
+        /// <summary>
+        /// Method {0} on role {1}
+        /// </summary>
+        internal static string FormatLoggingIdentityResultMessageForRole(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("LoggingIdentityResultMessageForRole"), p0, p1);
+        }
+
+        /// <summary>
+        /// Given password cannot be verified
+        /// </summary>
+        internal static string IncorrectPassword
+        {
+            get { return GetString("IncorrectPassword"); }
+        }
+
+        /// <summary>
+        /// Given password cannot be verified
+        /// </summary>
+        internal static string FormatIncorrectPassword()
+        {
+            return GetString("IncorrectPassword");
+        }
+
         private static string GetString(string name, params string[] formatterNames)
         {
             var value = _resourceManager.GetString(name);

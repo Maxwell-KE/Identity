@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.DependencyInjection.Fallback;
+using Microsoft.Framework.Logging;
 using Moq;
 using Xunit;
 
@@ -20,7 +21,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             public IUserStore<TestUser> StorePublic { get { return Store; } }
 
-            public TestManager(IUserStore<TestUser> store) : base(store) { }
+            public TestManager(IUserStore<TestUser> store, ILoggerFactory loggerFactory) : base(store,loggerFactory) { }
         }
 
         [Fact]
@@ -126,7 +127,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             // Setup
             var store = new Mock<IUserStore<TestUser>>();
-            var user = new TestUser {UserName="Foo"};
+            var user = new TestUser { UserName = "Foo" };
             store.Setup(s => s.FindByNameAsync(user.UserName.ToUpperInvariant(), CancellationToken.None)).Returns(Task.FromResult(user)).Verifiable();
             var userManager = MockHelpers.TestUserManager<TestUser>(store.Object);
 
@@ -143,7 +144,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             // Setup
             var store = new Mock<IUserStore<TestUser>>();
-            var user = new TestUser {UserName="Foo"};
+            var user = new TestUser { UserName = "Foo" };
             store.Setup(s => s.FindByNameAsync(user.UserName, CancellationToken.None)).Returns(Task.FromResult(user)).Verifiable();
             var userManager = MockHelpers.TestUserManager<TestUser>(store.Object);
             userManager.UserNameNormalizer = null;
@@ -162,7 +163,7 @@ namespace Microsoft.AspNet.Identity.Test
             // Setup
             var store = new Mock<IUserRoleStore<TestUser>>();
             var user = new TestUser { UserName = "Foo" };
-            var roles = new string[] {"A", "B", "C"};
+            var roles = new string[] { "A", "B", "C" };
             store.Setup(s => s.AddToRoleAsync(user, "A", CancellationToken.None))
                 .Returns(Task.FromResult(0))
                 .Verifiable();
@@ -527,11 +528,14 @@ namespace Microsoft.AspNet.Identity.Test
         public async Task ManagerPublicNullChecks()
         {
             var store = new NotImplementedStore();
+	    var loggerFactory = new LoggerFactory();
 
             Assert.Throws<ArgumentNullException>("store",
-                () => new UserManager<TestUser>(null));
+                () => new UserManager<TestUser>(null,null));
+	    Assert.Throws<ArgumentNullException>("loggerFactory",
+                () => new UserManager<TestUser>(store, null));
 
-            var manager = new UserManager<TestUser>(store);
+            var manager = new UserManager<TestUser>(store, loggerFactory);
 
             Assert.Throws<ArgumentNullException>("value", () => manager.PasswordHasher = null);
             Assert.Throws<ArgumentNullException>("value", () => manager.Options = null);
@@ -569,7 +573,7 @@ namespace Microsoft.AspNet.Identity.Test
             await Assert.ThrowsAsync<ArgumentNullException>("user",
                 async () => await manager.AddClaimAsync(null, new Claim("a", "b")));
             await Assert.ThrowsAsync<ArgumentNullException>("user",
-                async () => await manager.AddLoginAsync(null, new UserLoginInfo("","","")));
+                async () => await manager.AddLoginAsync(null, new UserLoginInfo("", "", "")));
             await Assert.ThrowsAsync<ArgumentNullException>("user",
                 async () => await manager.AddPasswordAsync(null, null));
             await Assert.ThrowsAsync<ArgumentNullException>("user",
