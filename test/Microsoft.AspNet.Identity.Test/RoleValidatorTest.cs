@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Microsoft.Framework.Logging;
 using System;
 using System.Threading.Tasks;
 using Xunit;
@@ -15,7 +14,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             // Setup
             var validator = new RoleValidator<TestRole>();
-            var manager = new RoleManager<TestRole>(new NoopRoleStore(), null, new LoggerFactory());
+            var manager = new RoleManager<TestRole>(new NoopRoleStore());
 
             // Act
             // Assert
@@ -30,7 +29,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             // Setup
             var validator = new RoleValidator<TestRole>();
-            var manager = new RoleManager<TestRole>(new NoopRoleStore(), null, new LoggerFactory());
+            var manager = new RoleManager<TestRole>(new NoopRoleStore());
             var user = new TestRole {Name = input};
 
             // Act

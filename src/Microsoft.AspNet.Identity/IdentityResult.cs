@@ -63,7 +63,7 @@ namespace Microsoft.AspNet.Identity
             }
             else
             {
-                logger.WriteWarning(Resources.FormatLogIdentityResultFailure(message, string.Join(",", this.Errors)));
+                logger.WriteWarning(Resources.FormatLogIdentityResultFailure(message, string.Join(",", Errors.Select(x => x.Code).ToList())));
             }
         }
     }

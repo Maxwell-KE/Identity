@@ -24,18 +24,14 @@ namespace Microsoft.AspNet.Identity
         /// </summary>
         /// <param name="store">The IRoleStore commits changes via the UpdateAsync/CreateAsync methods</param>
         /// <param name="roleValidator"></param>
-        public RoleManager(IRoleStore<TRole> store, 
+        public RoleManager(IRoleStore<TRole> store,
             IEnumerable<IRoleValidator<TRole>> roleValidators = null,
             IdentityErrorDescriber errors = null,
-	    ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory = null)
         {
             if (store == null)
             {
                 throw new ArgumentNullException("store");
-            }
-            if (loggerFactory == null)
-            {
-                throw new ArgumentNullException("loggerFactory");
             }
             Store = store;
             ErrorDescriber = errors ?? new IdentityErrorDescriber();
@@ -48,6 +44,7 @@ namespace Microsoft.AspNet.Identity
                 }
             }
 
+            loggerFactory = loggerFactory ?? new LoggerFactory();
             Logger = loggerFactory.Create(nameof(RoleManager<TRole>));
         }
 
@@ -130,9 +127,7 @@ namespace Microsoft.AspNet.Identity
                     errors.AddRange(result.Errors);
                 }
             }
-            return errors.Count > 0 ?
-                await LogResultAsync(IdentityResult.Failed(errors.ToArray()), role)
-                : await LogResultAsync(IdentityResult.Success, role);
+            return errors.Count > 0 ? IdentityResult.Failed(errors.ToArray()) : IdentityResult.Success;
         }
 
         /// <summary>

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Microsoft.Framework.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,9 +32,7 @@ namespace Microsoft.AspNet.Identity.Test
         public async Task RoleManagerPublicNullChecks()
         {
             Assert.Throws<ArgumentNullException>("store",
-                () => new RoleManager<TestRole>(null, null,null));
-            Assert.Throws<ArgumentNullException>("loggerFactory",
-                () => new RoleManager<TestRole>(new NotImplementedStore(), null, null));
+                () => new RoleManager<TestRole>(null, null, null));
             var manager = CreateRoleManager(new NotImplementedStore());
             await Assert.ThrowsAsync<ArgumentNullException>("role", async () => await manager.CreateAsync(null));
             await Assert.ThrowsAsync<ArgumentNullException>("role", async () => await manager.UpdateAsync(null));
@@ -61,7 +58,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             var v = new List<IRoleValidator<TestRole>>();
             v.Add(new RoleValidator<TestRole>());
-            return new RoleManager<TestRole>(roleStore, v, new LoggerFactory());
+            return new RoleManager<TestRole>(roleStore);
         }
 
         private class NotImplementedStore : IRoleStore<TestRole>

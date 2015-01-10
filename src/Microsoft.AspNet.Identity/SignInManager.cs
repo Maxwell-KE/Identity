@@ -22,11 +22,11 @@ namespace Microsoft.AspNet.Identity
     /// <typeparam name="TUser"></typeparam>
     public class SignInManager<TUser> where TUser : class
     {
-        public SignInManager(UserManager<TUser> userManager, 
-            IContextAccessor<HttpContext> contextAccessor, 
-            IClaimsIdentityFactory<TUser> claimsFactory, 
-	    ILoggerFactory loggerFactory
-            IOptions<IdentityOptions> optionsAccessor = null)
+        public SignInManager(UserManager<TUser> userManager,
+            IContextAccessor<HttpContext> contextAccessor,
+            IClaimsIdentityFactory<TUser> claimsFactory,
+            IOptions<IdentityOptions> optionsAccessor = null,
+            ILoggerFactory loggerFactory = null)
         {
             if (userManager == null)
             {
@@ -40,16 +40,14 @@ namespace Microsoft.AspNet.Identity
             {
                 throw new ArgumentNullException(nameof(claimsFactory));
             }
-	    if (loggerFactory == null)
-            {
-                throw new ArgumentNullException(nameof(loggerFactory));
-            }
 
             UserManager = userManager;
             Context = contextAccessor.Value;
             ClaimsFactory = claimsFactory;
             Options = optionsAccessor?.Options ?? new IdentityOptions();
-	    Logger = loggerFactory.Create(nameof(SignInManager<TUser>));
+
+            loggerFactory = loggerFactory ?? new LoggerFactory();
+            Logger = loggerFactory.Create(nameof(SignInManager<TUser>));
         }
 
         public UserManager<TUser> UserManager { get; private set; }
@@ -148,7 +146,7 @@ namespace Microsoft.AspNet.Identity
             return null;
         }
 
-        public virtual async Task<SignInResult> PasswordSignInAsync(TUser user, string password, 
+        public virtual async Task<SignInResult> PasswordSignInAsync(TUser user, string password,
             bool isPersistent, bool shouldLockout, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (user == null)
@@ -158,11 +156,11 @@ namespace Microsoft.AspNet.Identity
             var error = await PreSignInCheck(user, cancellationToken);
             if (error != null)
             {
-                 return await LogResultAsync(error.Value, user);
+                return await LogResultAsync(error, user);
             }
             if (await IsLockedOut(user, cancellationToken))
             {
-		return await LogResultAsync(SignInResult.LockedOut, user);
+                return await LogResultAsync(SignInResult.LockedOut, user);
             }
             if (await UserManager.CheckPasswordAsync(user, password, cancellationToken))
             {
@@ -176,10 +174,10 @@ namespace Microsoft.AspNet.Identity
                 if (await UserManager.IsLockedOutAsync(user, cancellationToken))
                 {
 
-                    return await LogResultAsync(SignInStatus.LockedOut, user);
+                    return await LogResultAsync(SignInResult.LockedOut, user);
                 }
             }
-            return await LogResultAsync(SignInStatus.Failed, user);
+            return await LogResultAsync(SignInResult.Failed, user);
         }
 
         public virtual async Task<SignInResult> PasswordSignInAsync(string userName, string password,
@@ -267,7 +265,7 @@ namespace Microsoft.AspNet.Identity
             var error = await PreSignInCheck(user, cancellationToken);
             if (error != null)
             {
-                return await LogResultAsync(error.Value, user);
+                return await LogResultAsync(error, user);
             }
             if (await UserManager.VerifyTwoFactorTokenAsync(user, provider, code, cancellationToken))
             {
@@ -285,11 +283,11 @@ namespace Microsoft.AspNet.Identity
                 }
                 await UserManager.ResetAccessFailedCountAsync(user, cancellationToken);
                 await SignInAsync(user, isPersistent);
-                return await LogResultAsync(SignInStatus.Success, user);
+                return await LogResultAsync(SignInResult.Success, user);
             }
             // If the token is incorrect, record the failure which also may cause the user to be locked out
             await UserManager.AccessFailedAsync(user, cancellationToken);
-            return await LogResultAsync(SignInStatus.Failed, user);
+            return await LogResultAsync(SignInResult.Failed, user);
         }
 
         /// <summary>
@@ -320,7 +318,7 @@ namespace Microsoft.AspNet.Identity
             var error = await PreSignInCheck(user, cancellationToken);
             if (error != null)
             {
-                return await LogResultAsync(error.Value, user);
+                return await LogResultAsync(error, user);
             }
             return await LogResultAsync(await SignInOrTwoFactorAsync(user, isPersistent, cancellationToken, loginProvider), user);
         }
@@ -422,7 +420,7 @@ namespace Microsoft.AspNet.Identity
         /// <returns></returns>
         protected async virtual Task<bool> LogResultAsync(bool result, TUser user, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
         {
-            Logger.WriteInformation(Resources.FormatLoggingSigninStatus(methodName, 
+            Logger.WriteInformation(Resources.FormatLoggingSigninStatus(methodName,
                 await UserManager.GetUserIdAsync(user), result));
 
             return result;
@@ -435,9 +433,9 @@ namespace Microsoft.AspNet.Identity
         /// <param name="user"></param>
         /// <param name="methodName"></param>
         /// <returns></returns>
-        protected async virtual Task<SignInStatus> LogResultAsync(SignInStatus status, TUser user, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
+        protected async virtual Task<SignInResult> LogResultAsync(SignInResult status, TUser user, [System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
         {
-            Logger.WriteInformation(Resources.FormatLoggingSigninStatus(methodName, 
+            Logger.WriteInformation(Resources.FormatLoggingSigninStatus(methodName,
                 await UserManager.GetUserIdAsync(user), status.ToString()));
 
             return status;

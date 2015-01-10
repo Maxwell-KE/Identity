@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.DependencyInjection.Fallback;
-using Microsoft.Framework.Logging;
 using Moq;
 using Xunit;
 
@@ -21,7 +20,7 @@ namespace Microsoft.AspNet.Identity.Test
         {
             public IUserStore<TestUser> StorePublic { get { return Store; } }
 
-            public TestManager(IUserStore<TestUser> store, ILoggerFactory loggerFactory) : base(store,loggerFactory) { }
+            public TestManager(IUserStore<TestUser> store) : base(store) { }
         }
 
         [Fact]
@@ -528,14 +527,11 @@ namespace Microsoft.AspNet.Identity.Test
         public async Task ManagerPublicNullChecks()
         {
             var store = new NotImplementedStore();
-	    var loggerFactory = new LoggerFactory();
 
             Assert.Throws<ArgumentNullException>("store",
-                () => new UserManager<TestUser>(null,null));
-	    Assert.Throws<ArgumentNullException>("loggerFactory",
-                () => new UserManager<TestUser>(store, null));
+                () => new UserManager<TestUser>(null, null));
 
-            var manager = new UserManager<TestUser>(store, loggerFactory);
+            var manager = new UserManager<TestUser>(store);
 
             Assert.Throws<ArgumentNullException>("value", () => manager.PasswordHasher = null);
             Assert.Throws<ArgumentNullException>("value", () => manager.Options = null);

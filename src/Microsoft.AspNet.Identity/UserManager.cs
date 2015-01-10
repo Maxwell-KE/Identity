@@ -39,31 +39,27 @@ namespace Microsoft.AspNet.Identity
         /// <param name="userValidator"></param>
         /// <param name="passwordValidator"></param>
         /// <param name="claimsIdentityFactory"></param>
-        public UserManager(IUserStore<TUser> store, 
-	    ILoggerFactory loggerFactory,
+        public UserManager(IUserStore<TUser> store,
             IOptions<IdentityOptions> optionsAccessor = null,
-            IPasswordHasher<TUser> passwordHasher = null, 
+            IPasswordHasher<TUser> passwordHasher = null,
             IEnumerable<IUserValidator<TUser>> userValidators = null,
-            IEnumerable<IPasswordValidator<TUser>> passwordValidators = null, 
+            IEnumerable<IPasswordValidator<TUser>> passwordValidators = null,
             IUserNameNormalizer userNameNormalizer = null,
             IdentityErrorDescriber errors = null,
-            IEnumerable<IUserTokenProvider<TUser>> tokenProviders = null, 
-            IEnumerable<IIdentityMessageProvider> msgProviders = null)
+            IEnumerable<IUserTokenProvider<TUser>> tokenProviders = null,
+            IEnumerable<IIdentityMessageProvider> msgProviders = null,
+            ILoggerFactory loggerFactory = null)
         {
             if (store == null)
             {
                 throw new ArgumentNullException(nameof(store));
-            }
-	    if(loggerFactory == null)
-            {
-                throw new ArgumentNullException(nameof(loggerFactory));
             }
             Store = store;
             Options = optionsAccessor?.Options ?? new IdentityOptions();
             PasswordHasher = passwordHasher ?? new PasswordHasher<TUser>();
             UserNameNormalizer = userNameNormalizer ?? new UpperInvariantUserNameNormalizer();
             ErrorDescriber = errors ?? new IdentityErrorDescriber();
-	    
+
             if (userValidators != null)
             {
                 foreach (var v in userValidators)
@@ -79,6 +75,7 @@ namespace Microsoft.AspNet.Identity
                 }
             }
 
+            loggerFactory = loggerFactory ?? new LoggerFactory();
             Logger = loggerFactory.Create(nameof(UserManager<TUser>));
 
             if (tokenProviders != null)
@@ -592,7 +589,7 @@ namespace Microsoft.AspNet.Identity
             }
             else
             {
-                await LogResultAsync(IdentityResult.Failed(Resources.IncorrectPassword), user);
+                await LogResultAsync(IdentityResult.Failed(ErrorDescriber.IncorrectPassword()), user);
             }
 
             return result;
@@ -635,7 +632,7 @@ namespace Microsoft.AspNet.Identity
             var hash = await passwordStore.GetPasswordHashAsync(user, cancellationToken);
             if (hash != null)
             {
-                return await LogResultAsync(new IdentityResult(ErrorDescriber.UserAlreadyHasPassword()), user);
+                return await LogResultAsync(IdentityResult.Failed(ErrorDescriber.UserAlreadyHasPassword()), user);
             }
             var result = await UpdatePasswordInternal(passwordStore, user, password, cancellationToken);
             if (!result.Succeeded)
@@ -671,11 +668,7 @@ namespace Microsoft.AspNet.Identity
                 }
                 return await LogResultAsync(await UpdateUserAsync(user, cancellationToken), user);
             }
-<<<<<<< HEAD
-            return IdentityResult.Failed(ErrorDescriber.PasswordMismatch());
-=======
-            return await LogResultAsync(IdentityResult.Failed(Resources.PasswordMismatch), user);
->>>>>>> 8deaba8... Added logging to code and updated tests
+            return await LogResultAsync(IdentityResult.Failed(ErrorDescriber.PasswordMismatch()), user);
         }
 
         /// <summary>
@@ -1576,7 +1569,7 @@ namespace Microsoft.AspNet.Identity
                     return true;
                 }
             }
-            await LogResultAsync(IdentityResult.Failed(Resources.InvalidToken), user);
+            await LogResultAsync(IdentityResult.Failed(ErrorDescriber.InvalidToken()), user);
             return false;
         }
 
@@ -1613,7 +1606,7 @@ namespace Microsoft.AspNet.Identity
             }
             else
             {
-                await LogResultAsync(IdentityResult.Failed(Resources.InvalidToken), user);
+                await LogResultAsync(IdentityResult.Failed(ErrorDescriber.InvalidToken()), user);
             }
 
             return result;
@@ -1732,7 +1725,7 @@ namespace Microsoft.AspNet.Identity
             }
             else
             {
-                await LogResultAsync(IdentityResult.Failed(Resources.InvalidToken), user);
+                await LogResultAsync(IdentityResult.Failed(ErrorDescriber.InvalidToken()), user);
             }
 
             return result;
@@ -2078,7 +2071,7 @@ namespace Microsoft.AspNet.Identity
             }
 
             return store.GetUsersInRoleAsync(roleName, cancellationToken);
-	}
+        }
 
         /// <summary>
         ///     Logs the current Identity Result and returns result object

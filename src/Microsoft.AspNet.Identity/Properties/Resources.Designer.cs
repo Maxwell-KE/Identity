@@ -43,7 +43,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Security Code
+        /// Security code
         /// </summary>
         internal static string DefaultEmailTokenProviderSubject
         {
@@ -51,7 +51,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Security Code
+        /// Security code
         /// </summary>
         internal static string FormatDefaultEmailTokenProviderSubject()
         {
@@ -107,7 +107,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// DefaultTokenProvider
+        /// Default Token Provider
         /// </summary>
         internal static string DefaultTokenProvider
         {
@@ -115,7 +115,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// DefaultTokenProvider
+        /// Default Token Provider
         /// </summary>
         internal static string FormatDefaultTokenProvider()
         {
@@ -139,7 +139,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Role Name '{0}' is already taken.
+        /// Role name '{0}' is already taken.
         /// </summary>
         internal static string DuplicateRoleName
         {
@@ -147,7 +147,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Role Name '{0}' is already taken.
+        /// Role name '{0}' is already taken.
         /// </summary>
         internal static string FormatDuplicateRoleName(object p0)
         {
@@ -155,7 +155,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// UserName '{0}' is already taken.
+        /// User name '{0}' is already taken.
         /// </summary>
         internal static string DuplicateUserName
         {
@@ -163,7 +163,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// UserName '{0}' is already taken.
+        /// User name '{0}' is already taken.
         /// </summary>
         internal static string FormatDuplicateUserName(object p0)
         {
@@ -408,22 +408,6 @@ namespace Microsoft.AspNet.Identity
         internal static string FormatPasswordTooShort(object p0)
         {
             return string.Format(CultureInfo.CurrentCulture, GetString("PasswordTooShort"), p0);
-        }
-
-        /// <summary>
-        /// {0} cannot be null or empty.
-        /// </summary>
-        internal static string PropertyTooShort
-        {
-            get { return GetString("PropertyTooShort"); }
-        }
-
-        /// <summary>
-        /// {0} cannot be null or empty.
-        /// </summary>
-        internal static string FormatPropertyTooShort(object p0)
-        {
-            return string.Format(CultureInfo.CurrentCulture, GetString("PropertyTooShort"), p0);
         }
 
         /// <summary>
@@ -779,7 +763,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Completed method {0} for user {1} with status {2}
+        /// {0} for user: {1} : Result : {2}
         /// </summary>
         internal static string LoggingSigninStatus
         {
@@ -787,7 +771,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Completed method {0} for user {1} with status {2}
+        /// {0} for user: {1} : Result : {2}
         /// </summary>
         internal static string FormatLoggingSigninStatus(object p0, object p1, object p2)
         {
@@ -795,7 +779,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Method {0} on user {1}
+        /// {0} for user: {1}
         /// </summary>
         internal static string LoggingIdentityResultMessage
         {
@@ -803,7 +787,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Method {0} on user {1}
+        /// {0} for user: {1}
         /// </summary>
         internal static string FormatLoggingIdentityResultMessage(object p0, object p1)
         {
@@ -811,7 +795,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Method {0} on role {1}
+        /// {0} for role: {1}
         /// </summary>
         internal static string LoggingIdentityResultMessageForRole
         {
@@ -819,7 +803,7 @@ namespace Microsoft.AspNet.Identity
         }
 
         /// <summary>
-        /// Method {0} on role {1}
+        /// {0} for role: {1}
         /// </summary>
         internal static string FormatLoggingIdentityResultMessageForRole(object p0, object p1)
         {
